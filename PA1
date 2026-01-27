@@ -1,0 +1,62 @@
+import java.util.Random;
+public class App {
+
+    public static int Bruteforce(int a, int b) {    //runs the first Brute Force algorithm (counts upwards)
+        int gcd = 1;
+        int limit = Math.min(a, b);
+
+        for (int i = 1; i <= limit; i++) {  //starts from 1 and counts up until it reaches the limit
+            if (a % i == 0 && b % i == 0) {
+                gcd = i;
+            }
+        }
+        return gcd;   //returns the gcd (greatest common divisor)
+    }
+    public static int Bruteforcetwo(int a, int b) {   //runs the second Brute Force algorithm (counts backwards)
+        int limit = Math.min(a, b);
+
+        for (int i = limit; i >= 1; i--) {   //starts from the limit and counts backwards to 1
+            if (a % i == 0 && b % i == 0) {
+                return i;  //returns i if a % i and b % i == 0
+            }
+        }
+        return 1;  //returns 1 if the previous isn't true
+    }
+    public static int EuclidsAlg(int a, int b) {    // runs the Euclid's Algorithm
+        int temp = 1;
+        while (temp != 0) {   //runs the loop as long as temp does not equal 0
+            temp = a % b;     //sets temp as the remainder of a and b
+            a = b;            //sets a to b
+            b = temp;         //sets b to the variable in temp
+        }
+        return a;   //returns a as the gcd
+    }
+    public static void main(String[] args) throws Exception {
+        Random rand = new Random();  //instantiates the random function
+
+        int[] x = new int[1000];     //instantiates an array for 1000 integers for x
+        int[] y = new int[1000];     //instantiates an array for 1000 integers for y
+
+        for (int i = 0; i < 1000; i++) {  //generates 1000 random integers for both x and y separately and inputs them into the arrays
+            x[i] = rand.nextInt(1000) + 1;
+            y[i] = rand.nextInt(1000) + 1;
+
+        }
+
+        System.out.println("Brute Force Version 1");
+            for (int i = 0; i < 1000; i++) {  //goes through every integer in the arrays and generates the gcd using the first brute force alg
+                int gcd = Bruteforce(x[i], y[i]);  //calls the Bruteforce class
+                System.out.println("Pair " + (i + 1) + ": GCD(" + x[i] + ", " + y[i] + ") = " + gcd);  //prints the result
+            }
+        
+        System.out.println("Brute Force Version 2");
+            for (int i = 0; i < 1000; i++) {  //goes through every int in the arrays and generates the gcd using the second brute force alg
+                int gcdtwo = Bruteforcetwo(x[i], y[i]);  //calls the Bruteforcetwo class
+                System.out.println("Pair " + (i + 1) + " GCD(" + x[i] + ", " + y[i] + ") = " + gcdtwo);  //prints the result
+            }
+
+        for (int i = 0; i < 1000; i++) {  //goes through every int in the arrays and generates the gcd using Euclid's alg
+            System.out.println("Pair " + (i + 1) + ": GCD(" + x[i] + ", " + y[i] + ") = " + EuclidsAlg(x[i], y[i]));  //prints results and calls the EuclidsAlg class
+        }
+    }
+}
