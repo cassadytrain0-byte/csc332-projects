@@ -1,0 +1,49 @@
+import java.util.Random;
+public class App {
+
+    public static int Bruteforce(int a, int b) {
+        int gcd = 1;
+        int limit = Math.min(a, b);
+
+        for (int i = 1; i <= limit; i++) {
+            if (a % i == 0 && b % i == 0) {
+                gcd = i;
+            }
+        }
+        return gcd;
+    }
+    public static int Bruteforcetwo(int a, int b) {
+        int limit = Math.min(a, b);
+
+        for (int i = limit; i >= 1; i--) {
+            if (a % i == 0 && b % i == 0) {
+                return i;
+            }
+        }
+        return 1;
+    }
+    public static void main(String[] args) throws Exception {
+        Random rand = new Random();
+
+        int[] x = new int[1000];
+        int[] y = new int[1000];
+
+        for (int i = 0; i < 1000; i++) {
+            x[i] = rand.nextInt(1000) + 1;
+            y[i] = rand.nextInt(1000) + 1;
+
+        }
+
+        System.out.println("Brute Force Version 1");
+            for (int i = 0; i < 1000; i++) { 
+                int gcd = Bruteforce(x[i], y[i]);
+                System.out.println("Pair " + (i + 1) + ": GCD(" + x[i] + ", " + y[i] + ") = " + gcd);
+            }
+        
+        System.out.println("Brute Force Version 2");
+            for (int i = 0; i < 1000; i++) {
+                int gcdtwo = Bruteforcetwo(x[i], y[i]);
+                System.out.println("Pair " + (i + 1) + " GCD(" + x[i] + ", " + y[i] + ") = " + gcdtwo);
+            }
+    }
+}
