@@ -1,0 +1,146 @@
+import random
+import time
+import csv
+import statistics
+
+NUM_PAIRS = 1000        #number of pairs the algorithm will run
+RAND_MIN = 1            #smallest number that can be compared in the GCD Pair
+RAND_MAX = 1000         #largest number that can be compared in the GCD Pair
+
+
+# ---------------- GCD ALGORITHMS ----------------
+
+def brute_force_v1(a, b):               #defines the function of the brute force version one algorithm
+    gcd = 1                             #creates variable gcd and setting to one to begin with
+    for i in range(1, min(a, b) + 1):   #this creates a loop that test every possible divisor
+        if a % i == 0 and b % i == 0:   #checks whether i is a common divisor of a and b 
+            gcd = i                     #if it does divide both, it becomes i. It will keep going until it finds the largest
+    return gcd                          #end of function; sending value back.
+
+
+def brute_force_v2(a, b):               #defines the function of the brute force version two algorithm
+    for i in range(min(a, b), 0, -1):   #creates loop that will check for divisors starting largest to smallest.
+        if a % i == 0 and b % i == 0:   #This checks that i is a common divisor of a and b
+            return i                    #returns value making it the GCD if true
+    return 1                            #only used if no larger value is found
+
+
+def euclid_original(a, b):              #defines the function of the euclid original verson algorithm
+    while b != 0:                       #creates while loop that will run as long as b is not zero
+        a, b = b, a % b                 #remainder when a is divided by b, new a gets old value of b and b gets remainder
+    return a                            #a contains GCD so it is returned to where it has been called from
+
+
+def euclid_second(a, b):                #defines the function of the euclid second version algorithm
+    while a != b:                       #creates while loop that will loop until both the values are equal
+        if a > b:                       #checks if a is larger than b
+            a -= b                      #this subtracts b from a
+        else:                           #runs when a is not greater than b
+            b -= a                      #subtracts b from a 
+    return a                            #when a and b are equal loop ends, leaving value as the GCD which gets sent back
+
+
+# ---------------- FUNCTIONS ----------------
+
+def measure_time(func, a, b):           #defines the function of measure_time
+    start = time.perf_counter_ns()      #records the start time in nanoseconds 
+    gcd = func(a, b)                    #calls in function with a and b, storing GCD value
+    end = time.perf_counter_ns()        #records end time in nanoseconds after function ends
+    elapsed_ms = (end - start) / 1_000_000 #converts the elapsed time from nanoseconds to milliseconds
+    return gcd, elapsed_ms              #returns both the time and GCD result
+
+
+def write_results_csv(filename, results):                 #defines the function to write GCD results to a file
+    with open(filename, mode="w", newline="") as file:    #creates a file for writing      
+        writer = csv.writer(file)                         #creates writer object for file
+        writer.writerow(["Number One", "Number Two", "Their GCD", "Time Spent (Milliseconds)"]) #header collumn of spread sheet
+        writer.writerows(results)                        #writing out results of each pair
+
+
+def write_statistics_csv(filename, times):                          #defines a function to write times to a csv file
+    with open(filename, mode="w", newline="") as file:              #creates file for writing
+        writer = csv.writer(file)                                   #creates a writer object for file
+        writer.writerow(["Statistics", "Milliseconds"])             #writes out header row
+        writer.writerow(["Maximum Time", max(times)])               #writes the maximun execution time
+        writer.writerow(["Minimum Time", min(times)])               #writes the minimun execution time
+        writer.writerow(["Average Time", sum(times) / len(times)])  #writes the average execution time
+        writer.writerow(["Median Time", statistics.median(times)])  #writes the median execution time
+
+
+def compare_algorithms(times_a, times_b):                           #defines a function to compare the execution times of two algorithms
+    count = 0                                                       #counts how many times algorithm a is faster than b
+    saved_time = 0.0                                                #adds up total time saved when A is faster than B
+    for a, b in zip(times_a, times_b):                              #creates loop that goes through both time lists at same time
+        if a < b:                                                   #checks if algorithm a is faster for this test
+            count += 1                                              #if it is it adds 1
+            saved_time += (b - a)                                   #adds the time saved for this comparison
+    avg_saved = saved_time / count if count > 0 else 0              #calculates the average time saved
+    return count, avg_saved                                         #returns how much a was faster and average time saved
+
+
+# ---------------- MAIN PROGRAM ----------------
+
+def main():
+    random_pairs = [(random.randint(RAND_MIN, RAND_MAX),            #Generates a random integer for the first value
+                     random.randint(RAND_MIN, RAND_MAX))            #Generates a random integer for the second value 
+                    for _ in range(NUM_PAIRS)]                      #Repeats the process until there are one thousand pairs
+
+    algorithms = [                                                  #creates a list of the algorithm names and their functions 
+        ("BF_v1", brute_force_v1),                                  #Brute-force algorithm version 1
+        ("BF_v2", brute_force_v2),                                  #Brute-force algorithm version 2
+        ("OE", euclid_original),                                    #Original Euclid algorithm
+        ("SE", euclid_second)                                       #Second Euclid algorithm
+    ]
+
+    all_times = {}                                                  #stores the execution times for each algorithm
+    all_results = {}                                                #stores full results of each algorithm
+
+    for name, algo in algorithms:                                   #Loops through each algorithm name and function
+        results = []                                                #List to store results of current algorithm
+        times = []                                                  #List to store current execution times for current algorithm
+
+        for a, b in random_pairs:                                   #Loops through each randomly generated integer pair
+            gcd, elapsed = measure_time(algo, a, b)                 #Measures the GCD result and execution time 
+            results.append([a, b, gcd, elapsed])                    #Stores the input pair, GCD, and elapsed time 
+            times.append(elapsed)                                   #Stores only the execution time
+
+        write_results_csv(f"{name}_Results.csv", results)           #Writes results to a CSV file
+        write_statistics_csv(f"{name}_Statistics.csv", times)       #Writes timing statistics to a CSV file
+
+        all_times[name] = times                                     #Saves the timing data for later comparison                             
+        all_results[name] = results                                 #Saves the full results for later use
+
+
+    # ----------- CONCLUSIONS FILE -----------
+
+    with open("Conclusions.txt", "w") as f:       #Opens text file to write performance conclusions
+        c, avg = compare_algorithms(all_times["BF_v2"], all_times["BF_v1"])         #Compares BF_v2 to BF_v1
+        f.write(f"(1) Out of 1,000 pairs of integers, brute-force (v2) outperformed brute-force (v1) "
+                f"in {c} pairs; and the average saved time for these pairs was {avg:.6f} milliseconds.\n\n")
+
+        c, avg = compare_algorithms(all_times["OE"], all_times["BF_v1"])            #Compares original Euclid to BF_v1
+        f.write(f"(2) Out of 1,000 pairs of integers, the original version of Euclid outperformed "
+                f"brute-force (v1) in {c} pairs; and the average saved time was {avg:.6f} milliseconds.\n\n")
+
+        c, avg = compare_algorithms(all_times["OE"], all_times["BF_v2"])            #Compares original Euclid to BF_v2 
+        f.write(f"(3) Out of 1,000 pairs of integers, the original version of Euclid outperformed "
+                f"brute-force (v2) in {c} pairs; and the average saved time was {avg:.6f} milliseconds.\n\n")
+
+        c, avg = compare_algorithms(all_times["SE"], all_times["OE"])               #Compares second Euclid to original Euclid
+        f.write(f"(4) Out of 1,000 pairs of integers, the second version of Euclid outperformed "
+                f"the original version of Euclid in {c} pairs; and the average saved time was "
+                f"{avg:.6f} milliseconds.\n\n")
+
+        c, avg = compare_algorithms(all_times["SE"], all_times["BF_v1"])            #Compares second Euclid to BF_v1
+        f.write(f"(5) Out of 1,000 pairs of integers, the second version of Euclid outperformed "
+                f"brute-force (v1) in {c} pairs; and the average saved time was {avg:.6f} milliseconds.\n\n")
+
+        c, avg = compare_algorithms(all_times["SE"], all_times["BF_v2"])            #Compares second Euclid to BF_v2
+        f.write(f"(6) Out of 1,000 pairs of integers, the second version of Euclid outperformed "
+                f"brute-force (v2) in {c} pairs; and the average saved time was {avg:.6f} milliseconds.\n")
+
+    print("All files generated successfully.")      #Just prints confirmation message to terminal
+
+
+if __name__ == "__main__":         #Ensures the program only runs when executed
+    main()                          #call the main function
