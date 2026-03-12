@@ -1,0 +1,98 @@
+import time
+stepArr = []
+
+#----------Recursive Algorithm-----------------
+def recursiveAlg(n , steps, path, all_paths):
+    if n == 0:
+        all_paths.append(path.copy())
+        return
+    
+    for step in steps:
+        if step <= n:
+            path.append(step)
+            recursiveAlg(n - step, steps, path, all_paths)
+            path.pop()
+
+#----------Non-Recursive Algorithm---------------
+def nonRecursiveAlg(n, steps):
+    dp = [[] for _ in range(n + 1)]
+    dp[0] = [[]]
+
+    for i in range(1, n + 1):
+        ways = []
+        for step in steps:
+            if i - step >= 0:
+                for path in dp[i - step]:
+                    ways.append(path + [step])
+        dp[i] = ways
+    
+    return dp[n]
+
+def main():
+    exitLoop = "n"
+    while exitLoop == "n" or exitLoop == "N":
+
+        userInput = input("How many steps? (Enter a positive integer)\n")
+        isNum = userInput.isnumeric() #Checks if input is a positive int. Includes 0
+        while isNum == False: #If User does NOT enter a positive int
+            userInput = input("Enter a POSITIVE INTEGER.\n")
+            isNum = userInput.isnumeric()
+
+        #Make sure there are at least 2 entries
+        leapArr = input("What steps are allowed in a leap? Separate numbers by spaces: ").split()
+        while (len(leapArr) < 2):
+            leapArr = input("Please enter at least 2 numbers. Separate them by spaces: ").split()
+
+        allNum = bool
+        while allNum != True: #Make sure all entries are ints
+            if allNum == False:
+                leapArr = input("Please only enter ints. Separate them by spaces: ").split()
+                while (len(leapArr) < 2):
+                    leapArr = input("Please enter at least 2 numbers. Separate them by spaces: ").split()
+            for i in leapArr:
+                #print("Checking ", i) #Commented out for debugging
+                allNum = i.isdigit()
+                if(allNum == False):
+                    #print(i, "is not int") #Commented out for debugging
+                    break
+                else:
+                    #print(i, "is an int") #Commented out for debugging
+                    allNum = True
+
+        intArr = list(map(int, leapArr)) #User input is now a list of ints
+
+        print("Steps: ", leapArr)
+
+        n = int(userInput)
+
+        #--------------Recursive---------------------
+        recursivePaths = []
+        recursiveAlg(n, intArr, [], recursivePaths)
+
+        #--------------Non-Recursive-----------------
+        nonRecursivePaths = nonRecursiveAlg(n, intArr)
+
+        print(" ")
+
+        totRec = len(recursivePaths)   #find the number of recursive paths
+        print(f"There are a total of {totRec} ways.")
+        for i, way in enumerate(recursivePaths, 1):
+            formatted = " -> ".join(map(str, way))
+            print(f"Way {i}: {formatted}")
+
+        print(" ")
+
+        totNonRec = len(nonRecursivePaths)       #finds the number of nonrecursive paths
+        print(f"There are a total of {totNonRec} ways.")
+        for i, way in enumerate(nonRecursivePaths, 1):
+            formatted = " -> ".join(map(str, way))
+            print(f"Way {i}: {formatted}")
+
+        exitLoop = input("Exit Program? (y/n): ")  # user input to exit while loop. Shouldn't be case-sensitive.
+        while exitLoop != "y" and exitLoop != "n" and exitLoop != "Y" and exitLoop != "N":  # User needs to input either n or y
+            exitLoop = input("Please input y or n: ")
+
+    print("Closing Program.")
+
+if __name__ == "__main__":  # ends the definition of main
+    main()  # calls the main function
