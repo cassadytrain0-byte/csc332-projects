@@ -1,0 +1,201 @@
+from itertools import combinations
+import time
+
+class Task:              #groups all of the information about a task into a singular object
+    def __init__(self, id, start, end, val):
+        self.id = id
+        self.start = start
+        self.end = end
+        self.val = val
+
+def getTasks():
+    n = int(input("Enter number of tasks: "))   #asks the user for the number of tasks the program needs to complete
+    tasks = []
+
+    for i in range(n):            #repeats the loop until the value of n is reached
+        print(f"Task {i + 1}:")       #prints which task the loop is on
+        start = int(input("Start Time: "))    #takes user input for the start time
+        end = int(input("End Time: "))       #takes user input for the end time
+        val = int(input("Value: "))      #takes user input for the value
+        tasks.append(Task(i, start, end, val))     #adds all of the numbers into a shared task
+
+    tasks.sort(key=lambda x: x.end)     #sorts by the end time
+
+    return tasks
+    
+def printTasks(tasks):     #this function prints all of the infdrmation about a task
+    print("\nTasks sorted by end time:")
+    print("ID | Start | End | Value")
+    for t in tasks:
+        print(f"{t.id + 1} | {t.start} | {t.end} | {t.val}")
+
+def compPrevious(tasks):
+    p = []
+    for i in range(len(tasks)):
+        j = i - 1
+        while j >= 0 and tasks[j].end > tasks[i].start:
+            j -= 1
+        p.append(j)
+    return p
+
+def bruteForce(tasks):    #runs the tasks through the brute force algorithm
+    startTime = time.time()
+    n = len(tasks)
+    bestVal = 0
+    bestSets = []
+
+    for r in range(1, n+1):
+        for subset in combinations(tasks, r):
+            subset = sorted(subset, key=lambda x: x.end)
+
+            valid = True
+            for i in range(len(subset)-1):
+                if subset[i].end > subset[i+1].start:
+                    valid = False
+                    break
+
+            if valid:
+                total = sum(t.val for t in subset)
+                if total > bestVal:
+                    bestVal = total
+                    bestSets = [subset]
+                elif total == bestVal:
+                    bestSets.append(subset)
+
+    elapsed = time.time() - startTime
+    return bestVal, bestSets, elapsed
+
+def recursiveDP(tasks, p):  #runs tasks through the recursive algorithm
+    startTime = time.time()
+    memo = {}
+
+    def solve(j):
+        if j < 0:
+            return 0, [[]]
+        
+        if j in memo:
+            return memo[j]
+        
+        incl_val, incl_set = solve(p[j])
+        incl_val += tasks[j].val
+        incl_sets = [s + [tasks[j]] for s in incl_set]
+        
+        excl_val, excl_sets = solve(j - 1)
+
+        if incl_val > excl_val:
+            result = (incl_val, incl_sets)
+        elif incl_val < excl_val:
+            result = (excl_val, excl_sets)
+        else:
+            result = (incl_val, incl_sets + excl_sets)
+
+        memo[j] = result
+        return result
+    
+    val, sets = solve(len(tasks) - 1)
+    elapsed = time.time() - startTime
+    return val, sets, elapsed
+
+def bottomUpDP(tasks, p): #runs tasks through bottom up algorithm
+    startTime = time.time()
+    n = len(tasks)
+
+    dp = [0] * n
+    sets = [[] for _ in range(n)]
+
+    for j in range(n):
+        incl_val = tasks[j].val
+        incl_sets = [[tasks[j]]]
+
+        if p[j] != -1:
+            incl_val += dp[p[j]]
+            incl_sets = [s + [tasks[j]] for s in sets[p[j]]]
+
+        excl_val = dp[j-1] if j > 0 else 0
+        excl_sets = sets[j-1] if j > 0 else [[]]
+
+        if incl_val > excl_val:
+            dp[j] = incl_val
+            sets[j] = incl_sets
+        elif incl_val < excl_val:
+            dp[j] = excl_val
+            sets[j] = excl_sets
+        else:
+            dp[j] = incl_val
+            sets[j] = incl_sets + excl_sets
+
+    elapsed = time.time() - startTime
+    return dp[n-1], sets[n-1], elapsed
+
+def maxTasks(tasks): #this maximizes the amount of task that can be done
+    startTime = time.time()
+    n = len(tasks)
+    bestSets = []
+    maxCount = 0
+
+    for r in range(1, n+1):
+        for subset in combinations(tasks, r):
+            subset = sorted(subset, key=lambda x: x.end)
+
+            valid = True
+            for i in range(len(subset)-1):
+                if subset[i].end > subset[i+1].start:
+                    valid = False
+                    break
+
+            if valid:
+                if len(subset) > maxCount:
+                    maxCount = len(subset)
+                    bestSets = [subset]
+                elif len(subset) == maxCount:
+                    bestSets.append(subset)
+
+    finalSets = []
+    for s in bestSets:
+        if not any(set(s) < set(other) for other in bestSets if s != other):
+            finalSets.append(s)
+
+    elapsed = time.time() - startTime
+    return finalSets, elapsed
+
+
+def printResults(name, val, sets, elapsedTime):  #this prints all results of the following algorithms
+    print(f"\n{name}")
+    print(f"Time Elapsed: {elapsedTime:.6f}s")
+    print(f"Maximum Earning = {val}")
+
+    for s in sets:
+        order = " -> ".join(f"Task_{t.id + 1}" for t in s)
+        print(f"{order}, total earning = {val}")
+
+def main():
+    tasks = getTasks()
+    printTasks(tasks)
+
+    p = compPrevious(tasks)
+
+    # Brute Force
+    bf_val, bf_sets, bf_time = bruteForce(tasks)
+    printResults("Brute Force", bf_val, bf_sets, bf_time)
+
+    # Recursive DP
+    rec_val, rec_sets, rec_time = recursiveDP(tasks, p)
+    printResults("Recursive DP", rec_val, rec_sets, rec_time)
+
+    # Bottom-Up DP
+    dp_val, dp_sets, dp_time = bottomUpDP(tasks, p)
+    printResults("Bottom-Up DP", dp_val, dp_sets, dp_time)
+
+    # Max number of tasks
+    max_sets, max_time = maxTasks(tasks)
+    print(f"\nMax Number of Tasks (Time: {max_time:.6f}s)")
+    print(f"There are {len(max_sets)} options:")
+
+    for i, s in enumerate(max_sets, 1):
+        order = " -> ".join(f"Task_{t.id + 1}" for t in s)
+        total = sum(t.val for t in s)
+        print(f"Option {i}: {order}, total earning = {total}")
+
+
+if __name__ == "__main__":
+    main()
